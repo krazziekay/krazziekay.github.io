@@ -1,6 +1,5 @@
 (function() { 
 
-	var intoRadian = Math.PI / 180; 
 	var gameSpeed = 10;
 	var asteroidMovementFactor = 0.1;
 	var alienMovementFactor = 0.1;
@@ -11,11 +10,11 @@
 
 	var asteroidRandomNumberFactor = 99;
 	var alienFactor = 777;
-	var sonicWaveFactor = 777;
+	var sonicWaveFactor = 555;
 	var alienShootingFactor = 555;
-	var healthFactor = 999;
-	var fireWorksFactor = 1111;
-	var shieldFactor = 666;
+	var healthFactor = 1111;
+	var fireWorksFactor = 2525;
+	var shieldFactor = 999;
 	
 	var angle = 0;
 	var themeSong;
@@ -596,22 +595,26 @@
 
 	function randomizeAsteroidPosition() {
 		this.position = utils.getRandom(1, 4);
-		if(this.position == 1) {
-			this.x = utils.getRandom(0, gameArea.canvas.width);
-			this.y = 0;
+		switch(this.position) {
+			case 1: 
+				this.x = utils.getRandom(0, gameArea.canvas.width);
+				this.y = 0;
+				break;
+			case 2: 
+				this.x = gameArea.canvas.width;
+				this.y = utils.getRandom(0, gameArea.canvas.width);
+				break;
+			case 3: 
+				this.x = utils.getRandom(0, gameArea.canvas.width);
+				this.y = gameArea.canvas.height;
+				break;
+			case 4: 
+			default:
+				this.x = 0;
+				this.y = utils.getRandom(0, gameArea.canvas.height);
+				break;
 		}
-		else if (this.position == 2) {
-			this.x = gameArea.canvas.width;
-			this.y = utils.getRandom(0, gameArea.canvas.width);
-		}
-		else if (this.position == 3) {
-			this.x = utils.getRandom(0, gameArea.canvas.width);
-			this.y = gameArea.canvas.height;
-		}
-		else if (this.position == 4) {
-			this.x = 0;
-			this.y = utils.getRandom(0, gameArea.canvas.height);
-		}
+
 		return {
 			position: this.position,
 			x: this.x,
@@ -621,26 +624,30 @@
 
 	function randomizePowerupPosition() {
 		this.position = utils.getRandom(1, 4);
-		if(this.position == 1) {
-			// console.log("First left corner");
-			this.x = 0.05 * gameArea.canvas.width;
-			this.y = 0.05 * gameArea.canvas.height;
+		switch(this.position) {
+			case 1:
+				// console.log("First left corner");
+				this.x = 0.05 * gameArea.canvas.width;
+				this.y = 0.05 * gameArea.canvas.height;
+				break;
+			case 2:
+				// console.log("First right corner");
+				this.x =  0.95 * gameArea.canvas.width;
+				this.y =  0.05 * gameArea.canvas.height;
+				break;
+			case 3:
+				// console.log("Bottom left corner");
+				this.x = 0.15 * gameArea.canvas.width;
+				this.y = 0.95 * gameArea.canvas.height;
+				break;
+			case 4:
+			default:
+				// console.log("Bottom right corner");
+				this.x = 0.15 * gameArea.canvas.width;
+				this.y =0.95 * gameArea.canvas.height;
+				break;
 		}
-		else if (this.position == 2) {
-			// console.log("First right corner");
-			this.x =  0.95 * gameArea.canvas.width;
-			this.y =  0.05 * gameArea.canvas.height;
-		}
-		else if (this.position == 3) {
-			// console.log("Bottom left corner");
-			this.x = 0.15 * gameArea.canvas.width;
-			this.y = 0.95 * gameArea.canvas.height;
-		}
-		else if (this.position == 4) {
-			// console.log("Bottom right corner");
-			this.x = 0.15 * gameArea.canvas.width;
-			this.y =0.95 * gameArea.canvas.height;
-		}
+
 		return {
 			position: this.position,
 			x: this.x,
