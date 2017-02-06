@@ -15,6 +15,7 @@
 	var alienShootingFactor = 555;
 	var healthFactor = 999;
 	var fireWorksFactor = 1111;
+	var shieldFactor = 10;
 	
 	var angle = 0;
 	var themeSong;
@@ -24,10 +25,12 @@
 	var asteroidArray = [];
 	var alienArray = [];
 	var alienLaserShotArray = [];
+	var bossLaserArray = [];
 	var sonicWaveArray = [];
 	var healthArray = [];
 	var laserArray = [];
 	var fireWorksArray = [];
+	var shieldArray = [];
 	
 	var cancelOutButton = false;
 	var pause = false;
@@ -35,11 +38,13 @@
 	var highScore = (window.localStorage.getItem("highScore") != null)?window.localStorage.getItem("highScore"):0;
 	var showSonicWaves = 2;
 	var showFireWorks = 0;
+	var showShield = 0;
 
-	var asteroidCapacity = 6;
+	var asteroidCapacity = 1;
 	var alienCapacity = 1;
 	var sonicWaveCapacity = 1;
 	var fireWorksCapacity = 1;
+	var shieldCapacity = 1;
 	var healthCapacity = 1;
 
 	var earthHealth = 10;
@@ -52,7 +57,7 @@
 	var bossDead = true;
 	var fireShotAlert = true;
 	var bossCounter = 0;
-	var bossArrivalTime = 1111;
+	var bossArrivalTime = 222;
 	var bossNumber = 1;
 
 	var earthImage = "images/earth.png";
@@ -70,13 +75,14 @@
 	var explosionImage = "images/explosion.png";
 	var zapImage = "images/zap.png";
 	var zappedLaserImage = "images/zapped-laser.png";
+	var shieldImage = "images/earth.png";
 	
 	var boss1Image = "images/death-star.png";
 	var boss1DamagedImage = "images/death-star-damaged.png";
 	var boss1DamagedImageTwo = "images/death-star-damaged-too.png";
 	var boss2Image = "images/switcher.png";
-	var boss2DamagedImage = "images/switcher.png";
-	var boss2DamagedImageTwo = "images/explosion.png";
+	var boss2DamagedImage = "images/switcher-damaged.png";
+	var boss2DamagedImageTwo = "images/switcher-damaged-too.png";
 	
 	var gameArea = {
 		canvas : document.createElement("canvas"),
@@ -198,8 +204,6 @@
 	}
 
 	function Laser() {
-		// this.x = 550;
-		// this.y = 200;
 		this.x = gameArea.canvas.width / 2 + 50;
 		this.y = gameArea.canvas.height / 2 - 100;   
 		this.angle = (1 / 1000);
@@ -364,6 +368,7 @@
 		this.update = function(boss) {
 			that.ctx = gameArea.context;
 			this.newPosition = moveAroundEarth(boss);
+			// this.newPosition = bossMovement(boss);
 			boss.x = this.newPosition.x;
 			boss.y = this.newPosition.y;
 			that.draw(boss);
@@ -500,6 +505,55 @@
 		}
 	}
 
+	function Shield() {
+		this.shield = true;
+		var randomPosition = randomizePowerupPosition();
+		this.positionFlag = randomPosition.position;
+		this.x = randomPosition.x;
+		this.y = randomPosition.y;
+		this.initialX = this.x;
+		this.initialY = this.y;
+		this.radius = 20;	
+		this.imageName =  shieldImage;
+		this.destroyedCounter = 0;
+		this.ctx;
+
+		var that = this;
+		this.draw = function(shield) {		
+			that.ctx = gameArea.context;
+			that.ctx.beginPath();
+			that.ctx.arc(shield.x , shield.y, shield.radius, 0, 2 * Math.PI);
+			that.image = new Image();
+			that.image.src = shield.imageName;
+			that.ctx.drawImage(that.image, shield.x - shield.radius, shield.y - shield.radius, shield.radius * 2, shield.radius * 2);		
+			that.ctx.closePath();
+		}
+		this.draw(this);
+		this.update = function(shield) {
+			that.ctx = gameArea.context;
+			this.newPosition = moveAroundRandomly(shield);
+			shield.x = this.newPosition.x;
+			shield.y = this.newPosition.y;
+			that.draw(shield);
+		}
+	}
+
+	function ShieldActivated() {
+		this.radius = 150;    
+		this.x = gameArea.canvas.width / 2;
+		this.y = gameArea.canvas.height / 2;   
+		this.update = function() {
+			ctx = gameArea.context;
+			ctx.beginPath();
+			ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI); 
+			ctx.fillStyle = "rgba(68, 200, 212, 0.39)";
+			ctx.fill();
+			ctx.strokeStyle = "#2137f3";
+			ctx.stroke();
+			ctx.closePath();
+		}
+	}
+
 	function Asteroid(miniAsteroid) {
 		if(miniAsteroid) {
 			this.x = miniAsteroid.x;
@@ -595,6 +649,75 @@
 	}
 
 	function moveAroundEarth(movingObject) {
+		if(movingObject.radius <= 90) {
+			movingObject.moveMentFactor = 0.3;
+		}
+		if(movingObject.x >= 0 && movingObject.y < gameArea.canvas.height / 2) {
+			if(movingObject.x < gameArea.canvas.width / 2 ) {	
+				this.x = movingObject.x + movingObject.movementFactor;
+				this.y = movingObject.y + movingObject.movementFactor;
+			}
+			else if(movingObject.x > gameArea.canvas.width / 2 ) {	
+				this.x = movingObject.x - movingObject.movementFactor;
+				this.y = movingObject.y + movingObject.movementFactor;
+			}
+			else {
+				this.x = movingObject.x;
+				this.y = movingObject.y + movingObject.movementFactor;
+			}
+		}
+		else if(movingObject.x >= 0 && movingObject.y > gameArea.canvas.height / 2) {
+			if(movingObject.x < gameArea.canvas.width / 2 ) {	
+				this.x = movingObject.x + movingObject.movementFactor;
+				this.y = movingObject.y - movingObject.movementFactor;
+			}
+			else if(movingObject.x > gameArea.canvas.width / 2 ) {	
+				this.x = movingObject.x - movingObject.movementFactor;
+				this.y = movingObject.y - movingObject.movementFactor;
+			}
+			else {
+				this.x = movingObject.x;
+				this.y = movingObject.y - movingObject.movementFactor;
+			}
+		}
+		else if (movingObject.x == 0 && movingObject.y == 0) {
+			this.x = movingObject.x + movingObject.movementFactor;
+			this.y = movingObject.y + movingObject.movementFactor;
+		}
+		else if (movingObject.x >= 0 && movingObject.y == gameArea.canvas.height / 2) {
+			if(movingObject.x < gameArea.canvas.width / 2) {
+				this.x = movingObject.x + movingObject.movementFactor;
+				this.y = movingObject.y;			
+			}
+			if(movingObject.x > gameArea.canvas.width / 2) {
+				this.x = movingObject.x - movingObject.movementFactor;
+				this.y = movingObject.y;			
+			}
+		}
+		else if (movingObject.x == 0 && movingObject.y == gameArea.canvas.height) {
+			this.x = movingObject.x + movingObject.movementFactor;
+			this.y = movingObject.y - movingObject.movementFactor;
+		}
+		else if (movingObject.x == gameArea.canvas.width && movingObject.y == 0) {
+			this.x = movingObject.x - movingObject.movementFactor;
+			this.y = movingObject.y + movingObject.movementFactor;
+		}
+		else if (movingObject.x == gameArea.canvas.width  && movingObject.y == gameArea.canvas.height / 2) {
+			this.x = movingObject.x - movingObject.movementFactor;
+			this.y = movingObject.y;
+		}
+		else if (movingObject.x == gameArea.canvas.width && movingObject.y == gameArea.canvas.height) {
+			this.x = movingObject.x - movingObject.movementFactor;
+			this.y = movingObject.y - movingObject.movementFactor;
+		}
+
+		return {
+			x: this.x,
+			y: this.y
+		};
+	}
+
+	function bossMovement(movingObject) {
 		if(movingObject.radius <= 90) {
 			movingObject.moveMentFactor = 0.3;
 		}
@@ -827,6 +950,10 @@
 							fireShotAlert = false;
 						}
 					}
+					else if(objectArray[j].shield) {
+						objectArray[j].imageName = fireworksExplosionImage;
+						shieldFactor *= 2;
+					}
 					else {
 						objectArray[j].imageName = explosionImage;
 					}
@@ -857,13 +984,21 @@
 
 	function checkLaserHitByAlien() {
 		for(var i = 0; i < alienLaserShotArray.length; i++) {
-			if ( utils.getDistance(earth, alienLaserShotArray[i]) < (alienLaserShotArray[i].radius + earth.radius) )  {
+			if ( showShield && utils.getDistance(shieldUp, alienLaserShotArray[i]) < (alienLaserShotArray[i].radius + shieldUp.radius) )  {
+				alienLaserShotArray.splice(i, 1);
+				showShield = 0;			
+			}
+			else if ( utils.getDistance(earth, alienLaserShotArray[i]) < (alienLaserShotArray[i].radius + earth.radius) )  {
 				alienLaserShotArray.splice(i, 1);
 				earth.health -= 1;					
 			}
 		}
 		for(var i = 0; i < bossLaserArray.length; i++) {
-			if ( utils.getDistance(earth, bossLaserArray[i]) < (bossLaserArray[i].radius + earth.radius) )  {
+			if ( showShield &&  utils.getDistance(shieldUp, bossLaserArray[i]) < (bossLaserArray[i].radius + shieldUp.radius) )  {
+				bossLaserArray.splice(i, 1);
+				showShield = 0;			
+			}
+			else if ( utils.getDistance(earth, bossLaserArray[i]) < (bossLaserArray[i].radius + earth.radius) )  {
 				bossLaserArray.splice(i, 1);
 				earth.health -= 1;
 				disableMouse = true;
@@ -906,57 +1041,78 @@
 		return boss;
 	}
 
-	function fireWorkShower(objectArray) {
-		for(var j = 0; j < objectArray.length; j++) {
-			if( laser.x < gameArea.canvas.width / 2 ) {
-				for(var i = 0; i < 10; i++) {
-					if(i % 2 == 0){
-						laserArray.push( new LaserShot({
-							x: laser.x - i * 2,
-							y: laser.y - i * 5
-						}) );
-					}
-					else {
-						laserArray.push( new LaserShot({
-							x: laser.x - i * 2,
-							y: laser.y + i * 5
-						}) );
-					}
+	function shieldBlock() {
+		for(var j = 0; j < asteroidArray.length; j++) {
+			if ( utils.getDistance(asteroidArray[j], shieldUp) < (shieldUp.radius + asteroidArray[j].radius) ) {
+				asteroidArray[j].destroyedCounter++;
+				asteroidArray[j].imageName = explosionImage;
+				showShield = 0;
+			}
+		}
+		for(var j = 0; j < alienArray.length; j++) {
+			if ( utils.getDistance(alienArray[j], shieldUp) < (shieldUp.radius + alienArray[j].radius) ) {
+				alienArray[j].destroyedCounter++;
+				alienArray[j].imageName = explosionImage;
+				showShield = 0;
+			}
+		}
+		if(bossCreated) {
+			if ( utils.getDistance(boss, shieldUp) < (shieldUp.radius + boss.radius) ) {
+				showShield = 0;
+				gameOver();
+			}
+		}
+	}
+
+	function fireWorkShower() {
+		if( laser.x < gameArea.canvas.width / 2 ) {
+			for(var i = 0; i < 10; i++) {
+				if(i % 2 == 0){
+					laserArray.push( new LaserShot({
+						x: laser.x - i * 2,
+						y: laser.y - i * 5
+					}) );
+				}
+				else {
+					laserArray.push( new LaserShot({
+						x: laser.x - i * 2,
+						y: laser.y + i * 5
+					}) );
 				}
 			}
-			if ( laser.x > gameArea.canvas.width / 2 ){
-				for(var i = 0; i < 10; i++) {
-					if(i % 2 == 0){
-						laserArray.push( new LaserShot({
-							x: laser.x + i * 2,
-							y: laser.y - i * 5
-						}) );
-					}
-					else {
-						laserArray.push( new LaserShot({
-							x: laser.x + i * 2,
-							y: laser.y + i * 5
-						}) );
-					}
+		}
+		if ( laser.x > gameArea.canvas.width / 2 ){
+			for(var i = 0; i < 10; i++) {
+				if(i % 2 == 0){
+					laserArray.push( new LaserShot({
+						x: laser.x + i * 2,
+						y: laser.y - i * 5
+					}) );
 				}
-			} 
-			if ( (gameArea.canvas.width / 2 - 150) <= laser.x && (gameArea.canvas.width / 2 + 150) >= laser.x  ) {
-				for(var i = 0; i < 10; i++) {
-					if(i % 2 == 0){
-						laserArray.push( new LaserShot({
-							x: laser.x + i * 5,
-							y: laser.y
-						}) );
-					}
-					else {
-						laserArray.push( new LaserShot({
-							x: laser.x - i * 5,
-							y: laser.y
-						}) );
-					}
+				else {
+					laserArray.push( new LaserShot({
+						x: laser.x + i * 2,
+						y: laser.y + i * 5
+					}) );
 				}
 			}
-		}	
+		} 
+		if ( (gameArea.canvas.width / 2 - 150) <= laser.x && (gameArea.canvas.width / 2 + 150) >= laser.x  ) {
+			for(var i = 0; i < 10; i++) {
+				if(i % 2 == 0){
+					laserArray.push( new LaserShot({
+						x: laser.x + i * 5,
+						y: laser.y
+					}) );
+				}
+				else {
+					laserArray.push( new LaserShot({
+						x: laser.x - i * 5,
+						y: laser.y
+					}) );
+				}
+			}
+		}
 	}
 
 	function bossDying(boss) {
@@ -1004,6 +1160,9 @@
 					if(gameObject[i].fireWorks) {
 						showFireWorks++;
 					}
+					if(gameObject[i].shield) {
+						showShield++;
+					}
 					splitAsteroid(gameObject[i]);
 					gameObject.splice(i, 1);	
 
@@ -1032,7 +1191,7 @@
 		if(bossAlert) {			
 			bossAlert = messageDisplayingGap({
 				title: {
-					text: "Here comes the Boss",
+					text: "Boss Alert!",
 					x: 380,
 					y: 100
 				},
@@ -1130,11 +1289,11 @@
 	var score = new Score();
 	var options = new Options();
 	var earth = new Earth();
+	var shieldUp = new ShieldActivated();
 	var laser  = new Laser();
 	var utils = new Util();
 	var evtHandlers = new EventHandler();
 	var distanceFromEarthToLaser = utils.getDistance(laser, earth); 
-	var bossLaserArray = [];
 	
 	window.addEventListener('keyup', evtHandlers.moveSelection);
 	window.addEventListener('click', evtHandlers.clickShoot);
@@ -1200,8 +1359,14 @@
 		}
 		if(asteroidFlag % fireWorksFactor == 0) {
 			if(fireWorksArray.length <= fireWorksCapacity) {
-				var fireWork = new FireWorks(); 	 	 
+				var fireWork = new FireWorks(); 	
 				fireWorksArray.push(fireWork);
+			}	
+		}
+		if(asteroidFlag % shieldFactor == 0) {
+			if(shieldArray.length <= shieldCapacity) {
+				var shield = new Shield(); 	 
+				shieldArray.push(shield);
 			}	
 		}
 
@@ -1220,7 +1385,7 @@
 					health:  (bossNumber % 2 == 0)?(1000 * bossNumber):(500 * bossNumber), 
 					destroyedCounter: 0,
 					killed: false,
-					shootingTimeFactor: (bossNumber % 2 == 0)?444:555,
+					shootingTimeFactor: (bossNumber % 2 == 0)?555:444,
 					shootingTimeCounter: 0
 				}
 				bossCreated = new createBoss(boss);		
@@ -1237,7 +1402,11 @@
 		
 		earth.update();	//Refreshing the earth 
 		laser.update(); //Refreshing the position of laser
-		
+		if(showShield) {//Check the presence of shield
+			shieldUp.update();	
+			shieldBlock();
+		}
+
 		for(var i = 0; i < alienArray.length; i++) {
 			alienArray[i].update(alienArray[i]);
 			alienArray[i].shootingTime++;//causes the alien to shoot
@@ -1260,12 +1429,12 @@
 		checkLaserHit(sonicWaveArray);
 		checkLaserHit(healthArray);
 		checkLaserHit(fireWorksArray);
+		checkLaserHit(shieldArray);
 		checkLaserHitByAlien();
 		
 		checkBoundaries(laserArray);
 		checkBoundaries(sonicWaveArray);
 		checkBoundaries(healthArray);
-		checkBoundaries(fireWorksArray);
 		checkEarthHealth();
 
 		if(sonicWavePowerHit) {
@@ -1278,6 +1447,7 @@
 		animateExplosion(sonicWaveArray);
 		animateExplosion(healthArray);
 		animateExplosion(fireWorksArray);
+		animateExplosion(shieldArray);
 
 		if(asteroidFlag % 99 == 0) {
 			showScore++;
@@ -1315,9 +1485,14 @@
 				
 				if(showFireWorks > 0) {					
 					showFireWorks = 0;
-					fireWorkShower(asteroidArray);
-					fireWorkShower(alienArray);
+					fireWorkShower();
 				}
+			}
+			if (evt.keyCode == 71) { // Fire in the hole
+				if(cancelOutButton){
+					return;
+				}
+				showShield = 1;			
 			}
 			if (evt.keyCode == 80) {//Pause
 				if(cancelOutButton){
