@@ -1310,11 +1310,11 @@
 					return;
 				}
 				
-				// if(showFireWorks > 0) {					
+				if(showFireWorks > 0) {					
 					showFireWorks = 0;
 					fireWorkShower(asteroidArray);
 					fireWorkShower(alienArray);
-				// }
+				}
 			}
 			if (evt.keyCode == 80) {//Pause
 				if(cancelOutButton){
