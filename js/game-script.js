@@ -15,7 +15,7 @@
 	var alienShootingFactor = 555;
 	var healthFactor = 999;
 	var fireWorksFactor = 1111;
-	var shieldFactor = 10;
+	var shieldFactor = 666;
 	
 	var angle = 0;
 	var themeSong;
@@ -57,7 +57,7 @@
 	var bossDead = true;
 	var fireShotAlert = true;
 	var bossCounter = 0;
-	var bossArrivalTime = 222;
+	var bossArrivalTime = 999;
 	var bossNumber = 1;
 
 	var earthImage = "images/earth.png";
@@ -75,7 +75,7 @@
 	var explosionImage = "images/explosion.png";
 	var zapImage = "images/zap.png";
 	var zappedLaserImage = "images/zapped-laser.png";
-	var shieldImage = "images/earth.png";
+	var shieldImage = "images/shield.png";
 	
 	var boss1Image = "images/death-star.png";
 	var boss1DamagedImage = "images/death-star-damaged.png";
