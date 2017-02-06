@@ -68,13 +68,16 @@
 	var fireworksExplosionImage = "images/nuclear-powerup-exploded.png";
 	var asteroidImage = "images/asteroid-2.png";
 	var explosionImage = "images/explosion.png";
-	var bossImage = "images/death-star.png";
-	var bossDamagedImage = "images/death-star-damaged.png";
-	var bossDamagedImageTwo = "images/death-star-damaged-too.png";
 	var zapImage = "images/zap.png";
 	var zappedLaserImage = "images/zapped-laser.png";
-	var gameOverImage = "images/game-over.png";
-
+	
+	var boss1Image = "images/death-star.png";
+	var boss1DamagedImage = "images/death-star-damaged.png";
+	var boss1DamagedImageTwo = "images/death-star-damaged-too.png";
+	var boss2Image = "images/switcher.png";
+	var boss2DamagedImage = "images/switcher.png";
+	var boss2DamagedImageTwo = "images/explosion.png";
+	
 	var gameArea = {
 		canvas : document.createElement("canvas"),
 		setup: function() {
@@ -1211,13 +1214,13 @@
 				bossDead = false;
 				boss = {
 					radius: 75,
-					imageName: bossImage,
-					damagedImage: bossDamagedImage,
-					damagedImageTwo: bossDamagedImageTwo,
-					health: 1000 * bossNumber, 
+					imageName: (bossNumber % 2 == 0)?boss1Image:boss2Image,
+					damagedImage: (bossNumber % 2 == 0)?boss1DamagedImage:boss2DamagedImage,
+					damagedImageTwo: (bossNumber % 2 == 0)?boss1DamagedImageTwo:boss2DamagedImageTwo,
+					health:  (bossNumber % 2 == 0)?(1000 * bossNumber):(500 * bossNumber), 
 					destroyedCounter: 0,
 					killed: false,
-					shootingTimeFactor: 555,
+					shootingTimeFactor: (bossNumber % 2 == 0)?444:555,
 					shootingTimeCounter: 0
 				}
 				bossCreated = new createBoss(boss);		
