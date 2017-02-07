@@ -3,7 +3,7 @@
 	var gameSpeed = 10;
 	var asteroidMovementFactor = 0.1;
 	var alienMovementFactor = 0.1;
-	var bossMovementFactor = 0.1;
+	var bossMovementFactor = 0.3;
 	var powerUpMovementFactor = 1;
 	var laserShotSpeed = 3;
 	var fireShotSpeed = 2;
@@ -12,9 +12,9 @@
 	var alienFactor = 777;
 	var sonicWaveFactor = 555;
 	var alienShootingFactor = 555;
-	var healthFactor = 1111;
-	var fireWorksFactor = 2525;
-	var shieldFactor = 999;
+	var healthFactor = 5555;
+	var fireWorksFactor = 999;
+	var shieldFactor = 1111;
 	
 	var angle = 0;
 	var themeSong;
@@ -39,7 +39,7 @@
 	var showFireWorks = 0;
 	var showShield = 0;
 
-	var asteroidCapacity = 1;
+	var asteroidCapacity = 7;
 	var alienCapacity = 1;
 	var sonicWaveCapacity = 1;
 	var fireWorksCapacity = 1;
@@ -56,7 +56,7 @@
 	var bossDead = true;
 	var fireShotAlert = true;
 	var bossCounter = 0;
-	var bossArrivalTime = 999;
+	var bossArrivalTime = 2525;
 	var bossNumber = 1;
 
 	var earthImage = "images/earth.png";
@@ -75,6 +75,9 @@
 	var zapImage = "images/zap.png";
 	var zappedLaserImage = "images/zapped-laser.png";
 	var shieldImage = "images/shield.png";
+
+	var explosionAudio = "assets/sounds/explosion.mp3";
+	var sonicBoomAudio = "assets/sounds/basicbeam-charge.mp3";
 	
 	var boss1Image = "images/death-star.png";
 	var boss1DamagedImage = "images/death-star-damaged.png";
@@ -82,7 +85,11 @@
 	var boss2Image = "images/switcher.png";
 	var boss2DamagedImage = "images/switcher-damaged.png";
 	var boss2DamagedImageTwo = "images/switcher-damaged-too.png";
+	var bossAngle = 1;//For boss movement
+	var majorAxis = 450;//major axis for the ellipse for boss movement
+	var minorAxis = 300;//minor axis for the ellipse for boss movement
 	
+	var gameTimerFlag = 0;
 	var gameArea = {
 		canvas : document.createElement("canvas"),
 		setup: function() {
@@ -114,9 +121,6 @@
 		this.update = function() {
 			ctx = gameArea.context;
 			ctx.beginPath();
-			// ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI); 
-			// ctx.fillStyle = "yellow";
-			// ctx.fill();
 			this.image = new Image();
 			this.image.src = earthImage;
 			ctx.drawImage(this.image, this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2);
@@ -214,7 +218,7 @@
 			that.ctx.beginPath();
 			that.image = new Image();
 			if(disableMouse){
-				if(asteroidFlag % 2 == 0) {	
+				if(gameTimerFlag % 2 == 0) {	
 					that.image.src = zappedLaserImage;
 				}
 				else {
@@ -222,7 +226,7 @@
 				}
 			}
 			else if(showFireWorks > 0) {
-				if(asteroidFlag % 2 == 0) {	
+				if(gameTimerFlag % 2 == 0) {	
 					that.image.src = laserBlinkImage;
 				}
 				else {
@@ -250,7 +254,7 @@
 	function LaserShot(laser) {
 		laserCounter++;
 		this.name = laserCounter;
-		this.x = laser.x ;
+		this.x = laser.x - 10 ;
 		this.y = laser.y ;
 		this.angle = (1 / 1000);
 		if(laser.boss) {
@@ -329,10 +333,6 @@
 	}
 
 	function Boss(boss) {
-		var randomPosition = randomizePowerupPosition();
-		this.positionFlag = randomPosition.position;
-		this.x = randomPosition.x;
-		this.y = randomPosition.y;
 		this.shootingTimeFactor = boss.shootingTimeFactor;
 		this.shootingTimeCounter = boss.shootingTimeCounter;
 		this.boss = true;
@@ -343,7 +343,6 @@
 		this.damagedImageTwo = boss.damagedImageTwo;
 		this.health = boss.health;
 		this.killed = boss.killed;
-		this.hit = false;
 		this.destroyedCounter = boss.destroyedCounter;
 		this.ctx;
 		var that = this;
@@ -351,12 +350,17 @@
 			that.ctx = gameArea.context;
 			that.ctx.beginPath();
 			that.image = new Image();
-			if(boss.health > 0 && boss.health <= 100 ) {
+			if (boss.health >= 0 && boss.health <= 100 ) {
 				that.image.src = boss.damagedImageTwo;
 			}
-			else if(boss.health > 100 && boss.health <= 300 ) {
+			else if (boss.health > 100 && boss.health <= 300 ) {
 				that.image.src = boss.damagedImage;
 			}
+			// else if (boss.health <= 0) {
+			// 	console.log("Ok now delete", boss.health);
+			// 	that.image.src =  explosionImage;
+			// 	delete this;
+			// }
 			else {
 				that.image.src = boss.imageName;
 			}
@@ -366,8 +370,7 @@
 		this.draw(this);
 		this.update = function(boss) {
 			that.ctx = gameArea.context;
-			this.newPosition = moveAroundEarth(boss);
-			// this.newPosition = bossMovement(boss);
+			this.newPosition = bossMovement();
 			boss.x = this.newPosition.x;
 			boss.y = this.newPosition.y;
 			that.draw(boss);
@@ -483,7 +486,7 @@
 			that.ctx = gameArea.context;
 			that.ctx.beginPath();
 			that.ctx.arc(that.x , that.y, that.radius, 0, 2 * Math.PI);
-			if(asteroidFlag % 2 == 0) {
+			if(gameTimerFlag % 2 == 0) {
 				that.ctx.strokeStyle = "#d3d422";
 				that.ctx.fillStyle = "rgba(227, 0, 0, 0.39)";
 			}
@@ -626,23 +629,19 @@
 		this.position = utils.getRandom(1, 4);
 		switch(this.position) {
 			case 1:
-				// console.log("First left corner");
 				this.x = 0.05 * gameArea.canvas.width;
 				this.y = 0.05 * gameArea.canvas.height;
 				break;
 			case 2:
-				// console.log("First right corner");
 				this.x =  0.95 * gameArea.canvas.width;
 				this.y =  0.05 * gameArea.canvas.height;
 				break;
 			case 3:
-				// console.log("Bottom left corner");
 				this.x = 0.15 * gameArea.canvas.width;
 				this.y = 0.95 * gameArea.canvas.height;
 				break;
 			case 4:
 			default:
-				// console.log("Bottom right corner");
 				this.x = 0.15 * gameArea.canvas.width;
 				this.y =0.95 * gameArea.canvas.height;
 				break;
@@ -655,138 +654,72 @@
 		};
 	}
 
+	function gameObjects(objectRandomNumberFactor, objectArray, objectCapacity, object) {
+		if(gameTimerFlag % objectRandomNumberFactor == 0) { 
+			if(objectArray.length <= objectCapacity) {
+				object = new object;
+				objectArray.push(object);
+			}	
+		}
+		return object;
+	}
+
 	function moveAroundEarth(movingObject) {
 		if(movingObject.radius <= 90) {
 			movingObject.moveMentFactor = 0.3;
 		}
-		if(movingObject.x >= 0 && movingObject.y < gameArea.canvas.height / 2) {
-			if(movingObject.x < gameArea.canvas.width / 2 ) {	
-				this.x = movingObject.x + movingObject.movementFactor;
-				this.y = movingObject.y + movingObject.movementFactor;
-			}
-			else if(movingObject.x > gameArea.canvas.width / 2 ) {	
-				this.x = movingObject.x - movingObject.movementFactor;
-				this.y = movingObject.y + movingObject.movementFactor;
-			}
-			else {
-				this.x = movingObject.x;
-				this.y = movingObject.y + movingObject.movementFactor;
-			}
-		}
-		else if(movingObject.x >= 0 && movingObject.y > gameArea.canvas.height / 2) {
-			if(movingObject.x < gameArea.canvas.width / 2 ) {	
-				this.x = movingObject.x + movingObject.movementFactor;
-				this.y = movingObject.y - movingObject.movementFactor;
-			}
-			else if(movingObject.x > gameArea.canvas.width / 2 ) {	
-				this.x = movingObject.x - movingObject.movementFactor;
-				this.y = movingObject.y - movingObject.movementFactor;
-			}
-			else {
-				this.x = movingObject.x;
-				this.y = movingObject.y - movingObject.movementFactor;
-			}
-		}
-		else if (movingObject.x == 0 && movingObject.y == 0) {
+		if( (movingObject.x >= 0 && movingObject.x < gameArea.canvas.width / 2) 
+			&& ( movingObject.y < gameArea.canvas.height / 2 ) ) {
 			this.x = movingObject.x + movingObject.movementFactor;
 			this.y = movingObject.y + movingObject.movementFactor;
 		}
-		else if (movingObject.x >= 0 && movingObject.y == gameArea.canvas.height / 2) {
-			if(movingObject.x < gameArea.canvas.width / 2) {
-				this.x = movingObject.x + movingObject.movementFactor;
-				this.y = movingObject.y;			
-			}
-			if(movingObject.x > gameArea.canvas.width / 2) {
-				this.x = movingObject.x - movingObject.movementFactor;
-				this.y = movingObject.y;			
-			}
-		}
-		else if (movingObject.x == 0 && movingObject.y == gameArea.canvas.height) {
-			this.x = movingObject.x + movingObject.movementFactor;
-			this.y = movingObject.y - movingObject.movementFactor;
-		}
-		else if (movingObject.x == gameArea.canvas.width && movingObject.y == 0) {
+		else if ( (movingObject.x > gameArea.canvas.width / 2 && movingObject.x < gameArea.canvas.width)
+			&& ( movingObject.y < gameArea.canvas.height / 2 ) ) {
 			this.x = movingObject.x - movingObject.movementFactor;
 			this.y = movingObject.y + movingObject.movementFactor;
 		}
-		else if (movingObject.x == gameArea.canvas.width  && movingObject.y == gameArea.canvas.height / 2) {
+		else if ( (movingObject.x > gameArea.canvas.width / 2 && movingObject.x < gameArea.canvas.width) 
+			&& ( movingObject.y > gameArea.canvas.height / 2) ) {
+			this.x = movingObject.x - movingObject.movementFactor;
+			this.y = movingObject.y - movingObject.movementFactor;
+		}
+		else if ( (movingObject.x >= 0 && movingObject.x < gameArea.canvas.width / 2)  
+			&& ( movingObject.y > gameArea.canvas.height / 2) ) {
+			this.x = movingObject.x + movingObject.movementFactor;
+			this.y = movingObject.y - movingObject.movementFactor;
+		}
+		else if ( movingObject.x == gameArea.canvas.width / 2 && ( movingObject.y < gameArea.canvas.height / 2 ) ) {
+			this.x = movingObject.x;
+			this.y = movingObject.y + movingObject.movementFactor;
+		}
+		else if ( movingObject.x == gameArea.canvas.width / 2 && ( movingObject.y > gameArea.canvas.height / 2 ) ) {
+			this.x = movingObject.x;
+			this.y = movingObject.y - movingObject.movementFactor;
+		}
+		else if ( movingObject.x < gameArea.canvas.width / 2 && ( movingObject.y == gameArea.canvas.height / 2 ) ) {
+			this.x = movingObject.x + movingObject.movementFactor;
+			this.y = movingObject.y;	
+		}
+		else if ( movingObject.x > gameArea.canvas.width / 2 && ( movingObject.y == gameArea.canvas.height / 2 ) ) {
 			this.x = movingObject.x - movingObject.movementFactor;
 			this.y = movingObject.y;
 		}
-		else if (movingObject.x == gameArea.canvas.width && movingObject.y == gameArea.canvas.height) {
-			this.x = movingObject.x - movingObject.movementFactor;
-			this.y = movingObject.y - movingObject.movementFactor;
-		}
-
 		return {
 			x: this.x,
 			y: this.y
 		};
 	}
 
-	function bossMovement(movingObject) {
-		if(movingObject.radius <= 90) {
-			movingObject.moveMentFactor = 0.3;
+	function bossMovement() {
+		if(boss.health % 3 == 0) {
+			bossAngle -= 0.005;
 		}
-		if(movingObject.x >= 0 && movingObject.y < gameArea.canvas.height / 2) {
-			if(movingObject.x < gameArea.canvas.width / 2 ) {	
-				this.x = movingObject.x + movingObject.movementFactor;
-				this.y = movingObject.y + movingObject.movementFactor;
-			}
-			else if(movingObject.x > gameArea.canvas.width / 2 ) {	
-				this.x = movingObject.x - movingObject.movementFactor;
-				this.y = movingObject.y + movingObject.movementFactor;
-			}
-			else {
-				this.x = movingObject.x;
-				this.y = movingObject.y + movingObject.movementFactor;
-			}
+		else {
+			bossAngle += 0.005;
 		}
-		else if(movingObject.x >= 0 && movingObject.y > gameArea.canvas.height / 2) {
-			if(movingObject.x < gameArea.canvas.width / 2 ) {	
-				this.x = movingObject.x + movingObject.movementFactor;
-				this.y = movingObject.y - movingObject.movementFactor;
-			}
-			else if(movingObject.x > gameArea.canvas.width / 2 ) {	
-				this.x = movingObject.x - movingObject.movementFactor;
-				this.y = movingObject.y - movingObject.movementFactor;
-			}
-			else {
-				this.x = movingObject.x;
-				this.y = movingObject.y - movingObject.movementFactor;
-			}
-		}
-		else if (movingObject.x == 0 && movingObject.y == 0) {
-			this.x = movingObject.x + movingObject.movementFactor;
-			this.y = movingObject.y + movingObject.movementFactor;
-		}
-		else if (movingObject.x >= 0 && movingObject.y == gameArea.canvas.height / 2) {
-			if(movingObject.x < gameArea.canvas.width / 2) {
-				this.x = movingObject.x + movingObject.movementFactor;
-				this.y = movingObject.y;			
-			}
-			if(movingObject.x > gameArea.canvas.width / 2) {
-				this.x = movingObject.x - movingObject.movementFactor;
-				this.y = movingObject.y;			
-			}
-		}
-		else if (movingObject.x == 0 && movingObject.y == gameArea.canvas.height) {
-			this.x = movingObject.x + movingObject.movementFactor;
-			this.y = movingObject.y - movingObject.movementFactor;
-		}
-		else if (movingObject.x == gameArea.canvas.width && movingObject.y == 0) {
-			this.x = movingObject.x - movingObject.movementFactor;
-			this.y = movingObject.y + movingObject.movementFactor;
-		}
-		else if (movingObject.x == gameArea.canvas.width  && movingObject.y == gameArea.canvas.height / 2) {
-			this.x = movingObject.x - movingObject.movementFactor;
-			this.y = movingObject.y;
-		}
-		else if (movingObject.x == gameArea.canvas.width && movingObject.y == gameArea.canvas.height) {
-			this.x = movingObject.x - movingObject.movementFactor;
-			this.y = movingObject.y - movingObject.movementFactor;
-		}
-
+		this.x = earth.x - (majorAxis * Math.cos(bossAngle)) ;
+		this.y = earth.y + (minorAxis * Math.sin(bossAngle));
+		
 		return {
 			x: this.x,
 			y: this.y
@@ -929,7 +862,7 @@
 		for(var i = 0; i < laserArray.length; i++) {
 			for(var j = 0; j < objectArray.length; j++) {
 				if ( laserArray[i] && utils.getDistance(objectArray[j], laserArray[i]) < (laserArray[i].radius + objectArray[j].radius) )  {
-					(new Audio('assets/sounds/explosion.mp3')).play();
+					(new Audio(explosionAudio)).play();
 					if(objectArray[j].sonicWave) {	
 						objectArray[j].imageName = sonicWaveExplosionImage;
 						sonicWaveFactor *= 2;
@@ -942,7 +875,7 @@
 						objectArray[j].imageName = fireworksExplosionImage;
 						fireWorksFactor *= 2;
 						if(fireShotAlert) {
-							bossAlert = messageDisplayingGap({
+							this.fireShot = messageDisplayingGap({
 								title: {
 									text: "Full of energy",
 									x: 420,
@@ -953,7 +886,7 @@
 									x: 380,
 									y: 140
 								}
-							}, 2000, bossAlert);
+							}, 2000, this.fireShot);
 							fireShotAlert = false;
 						}
 					}
@@ -975,7 +908,7 @@
 		for(var i = 0; i < laserArray.length; i++) {
 			if ( laserArray[i] && utils.getDistance(boss, laserArray[i]) < (laserArray[i].radius + boss.radius) )  {
 				if (boss.health <= 0) {
-					(new Audio('assets/sounds/explosion.mp3')).play();	
+					(new Audio(explosionAudio)).play();	
 					boss.imageName = explosionImage;
 					boss.destroyedCounter++;				
 				}
@@ -1019,14 +952,12 @@
 	function sonicBoom() {
 		for(var j = 0; j < asteroidArray.length; j++) {
 			if ( utils.getDistance(asteroidArray[j], sonicWavePowerHit) < (asteroidArray[j].radius + sonicWavePowerHit.radius) ) {
-				// (new Audio('assets/sounds/explosion.mp3')).play();
 				asteroidArray[j].imageName = "images/explosion.png";
 				asteroidArray[j].destroyedCounter++;
 			}
 		}
 		for(var j = 0; j < alienArray.length; j++) {
 			if ( utils.getDistance(alienArray[j], sonicWavePowerHit) < (alienArray[j].radius + sonicWavePowerHit.radius) ) {
-				// (new Audio('assets/sounds/explosion.mp3')).play();
 				alienArray[j].imageName = "images/explosion.png";
 				alienArray[j].destroyedCounter++;
 			}
@@ -1035,9 +966,9 @@
 
 	function checkSonicBoomHittingBoss(boss) {
 		if ( sonicWavePowerHit && utils.getDistance(boss, sonicWavePowerHit) < (boss.radius + sonicWavePowerHit.radius) ) {
-			// (new Audio('assets/sounds/explosion.mp3')).play();
+			// (new Audio(explosionAudio)).play();
 			if (boss.health < 0) {
-				(new Audio('assets/sounds/explosion.mp3')).play();	
+				(new Audio(explosionAudio)).play();	
 				boss.imageName = explosionImage;
 				boss.destroyedCounter++;					
 			}
@@ -1073,7 +1004,7 @@
 
 	function fireWorkShower() {
 		if( laser.x < gameArea.canvas.width / 2 ) {
-			for(var i = 0; i < 10; i++) {
+			for(var i = 0; i < 15; i++) {
 				if(i % 2 == 0){
 					laserArray.push( new LaserShot({
 						x: laser.x - i * 2,
@@ -1089,7 +1020,7 @@
 			}
 		}
 		if ( laser.x > gameArea.canvas.width / 2 ){
-			for(var i = 0; i < 10; i++) {
+			for(var i = 0; i < 15; i++) {
 				if(i % 2 == 0){
 					laserArray.push( new LaserShot({
 						x: laser.x + i * 2,
@@ -1105,7 +1036,7 @@
 			}
 		} 
 		if ( (gameArea.canvas.width / 2 - 150) <= laser.x && (gameArea.canvas.width / 2 + 150) >= laser.x  ) {
-			for(var i = 0; i < 10; i++) {
+			for(var i = 0; i < 15	; i++) {
 				if(i % 2 == 0){
 					laserArray.push( new LaserShot({
 						x: laser.x + i * 5,
@@ -1145,11 +1076,6 @@
 				gameOver();
 			}
 		}
-		if(bossCreated) {
-			if ( utils.getDistance(boss, body) < (body.radius + boss.radius) ) {
-				gameOver();
-			}
-		}
 	}
 
 	function animateExplosion(gameObject) {
@@ -1184,22 +1110,13 @@
 		}
 	}
 
-	function backgroundThemeSong() {
-		themeSong = new Audio('assets/sounds/theme-song.wav'); 
-		themeSong.addEventListener('ended', function() {
-			this.currentTime = 0;
-			this.play();
-		}, false);
-		themeSong.play();
-	}
-
 	function createBoss(boss) {
 		this.bossInstance;
 		if(bossAlert) {			
 			bossAlert = messageDisplayingGap({
 				title: {
 					text: "Boss Alert!",
-					x: 380,
+					x: 460,
 					y: 100
 				},
 				part1:  {
@@ -1250,6 +1167,15 @@
 				return true;
 			});	
 		}
+	}
+
+	function backgroundThemeSong() {
+		themeSong = new Audio('assets/sounds/theme-song.wav'); 
+		themeSong.addEventListener('ended', function() {
+			this.currentTime = 0;
+			this.play();
+		}, false);
+		themeSong.play();
 	}
 
 	function gameSpeedSettings() {
@@ -1307,14 +1233,11 @@
 	window.addEventListener('mousemove', evtHandlers.getMousePosition);	
 	
 	gameArea.start();
-
-	var asteroidFlag = 0;
-
 	backgroundThemeSong();
 
 
 	function updateGameArea() {
-		asteroidFlag++;
+		gameTimerFlag++;
 
 		gameSpeedSettings();
 		gameArea.clear();
@@ -1339,43 +1262,13 @@
 			}, 2000, gameStart);
 		}
 
-		//create new asteroid and move it as per the "asteroidRandomNumberFactor"
-		if(asteroidFlag % asteroidRandomNumberFactor == 0) { 
-			if(asteroidArray.length <= asteroidCapacity) {
-				asteroid = new Asteroid();
-				asteroidArray.push(asteroid);
-			}
-		}
-		if(asteroidFlag % alienFactor == 0) {
-			if(alienArray.length <= alienCapacity) {
-				var alien = new Alien(); 	 	 
-				alienArray.push(alien);
-			}	
-		}
-		if(asteroidFlag % sonicWaveFactor == 0) {
-			if(sonicWaveArray.length <= sonicWaveCapacity) {
-				var sonicWave = new SonicWave(); 	 	 
-				sonicWaveArray.push(sonicWave);
-			}	
-		}
-		if(asteroidFlag % healthFactor == 0) {
-			if(healthArray.length <= healthCapacity) {
-				var healthUp = new Health(); 	 	 
-				healthArray.push(healthUp);
-			}	
-		}
-		if(asteroidFlag % fireWorksFactor == 0) {
-			if(fireWorksArray.length <= fireWorksCapacity) {
-				var fireWork = new FireWorks(); 	
-				fireWorksArray.push(fireWork);
-			}	
-		}
-		if(asteroidFlag % shieldFactor == 0) {
-			if(shieldArray.length <= shieldCapacity) {
-				var shield = new Shield(); 	 
-				shieldArray.push(shield);
-			}	
-		}
+		//creating new obstacles
+		asteroid = gameObjects(asteroidRandomNumberFactor, asteroidArray, asteroidCapacity, Asteroid);
+		alien = gameObjects(alienFactor, alienArray, alienCapacity, Alien);
+		sonicWave = gameObjects(sonicWaveFactor, sonicWaveArray, sonicWaveCapacity, SonicWave);
+		health = gameObjects(healthFactor, healthArray, healthCapacity, Health);
+		fireWork = gameObjects(fireWorksFactor, fireWorksArray, fireWorksCapacity, FireWorks);
+		shield = gameObjects(shieldFactor, shieldArray, shieldCapacity, Shield);
 
 		if(!bossDead){
 			bossCounter = 0;
@@ -1456,7 +1349,7 @@
 		animateExplosion(fireWorksArray);
 		animateExplosion(shieldArray);
 
-		if(asteroidFlag % 99 == 0) {
+		if(gameTimerFlag % 99 == 0) {
 			showScore++;
 		}
 		score.update();
@@ -1480,6 +1373,10 @@
 		this.getRandom = function (min, max) {
 			return Math.floor(Math.random()*(max-min+1)+min);
 		}
+
+		this.isPlaying = function (audio) { 
+			return !audio.paused; 
+		}
 	}
 
 	function EventHandler() {
@@ -1494,12 +1391,6 @@
 					showFireWorks = 0;
 					fireWorkShower();
 				}
-			}
-			if (evt.keyCode == 71) { // Fire in the hole
-				if(cancelOutButton){
-					return;
-				}
-				showShield = 1;			
 			}
 			if (evt.keyCode == 80) {//Pause
 				if(cancelOutButton){
@@ -1538,6 +1429,7 @@
 					return;
 				}
 				if(showSonicWaves > 0) {
+					(new Audio(sonicBoomAudio)).play();
 					sonicWavePowerHit = new SonicWavePower();
 					showSonicWaves--;
 				}
