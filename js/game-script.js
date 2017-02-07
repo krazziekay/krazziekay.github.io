@@ -51,6 +51,7 @@
 	var bossAlert = true;
 	var mouseAngle = 1;
 	var disableMouse = false;
+	var gameOverStatus = false;
 
 	var boss, bossCreated;
 	var bossDead = true;
@@ -712,10 +713,10 @@
 
 	function bossMovement() {
 		if(boss.health % 3 == 0) {
-			bossAngle -= 0.005;
+			bossAngle -= 0.008;
 		}
 		else {
-			bossAngle += 0.005;
+			bossAngle += 0.008;
 		}
 		this.x = earth.x - (majorAxis * Math.cos(bossAngle)) ;
 		this.y = earth.y + (minorAxis * Math.sin(bossAngle));
@@ -1219,6 +1220,7 @@
 	//Game Over Condition
 	function gameOver() {
 		var gameOver = new GameOver();
+		gameOverStatus = true;
 		themeSong.pause();
 		sonicWavePowerHit = null;
 		laserArray = [];
@@ -1414,7 +1416,6 @@
 				}
 				else {
 					clearInterval(gameArea.interval);
-					themeSong.pause();
 					pause = true;
 				}
 			}
@@ -1460,7 +1461,7 @@
 	  	}
 
 	  	this.clickShoot = function() {
-	  		if(!disableMouse) {  			
+	  		if(!disableMouse && !gameOverStatus	) {  		
 		  		laserShot = new LaserShot(laser);
 				(new Audio('assets/sounds/shot.mp3')).play();
 				laserArray.push(laserShot);
