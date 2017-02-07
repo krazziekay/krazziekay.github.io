@@ -1068,12 +1068,24 @@
 	function checkCollision(body) {
 		for(var j = 0; j < asteroidArray.length; j++) {
 			if ( utils.getDistance(asteroidArray[j], body) < (body.radius + asteroidArray[j].radius) ) {
-				gameOver();
+				asteroidArray[j].destroyedCounter++;
+				asteroidArray[j].imageName = explosionImage;
+				if(asteroidArray[j].destroyedCounter > 10) {
+					asteroidArray.splice(j, 1);
+					earth.health -= 1;
+					(new Audio(explosionAudio)).play();
+				}
 			}
 		}
 		for(var j = 0; j < alienArray.length; j++) {
 			if ( utils.getDistance(alienArray[j], body) < (body.radius + alienArray[j].radius) ) {
-				gameOver();
+				alienArray[j].destroyedCounter++;
+				alienArray[j].imageName = explosionImage;
+				if(alienArray[j].destroyedCounter > 10) {
+					alienArray.splice(j, 1);
+					earth.health -= 1;	
+					(new Audio(explosionAudio)).play();
+				}
 			}
 		}
 	}
